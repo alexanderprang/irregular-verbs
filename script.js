@@ -56,36 +56,72 @@ const verbs = [
 ];
 
 // Hier bleibt der restliche Code aus der vorherigen Version unverändert
-
 let currentVerbIndex = 0;
 let correctAnswers = 0;
 let totalAttempts = 0;
 const incorrectWords = [];
+let mode = "both"; // Standardmodus: Beide Formen üben
 
+// HTML-Elemente
 const verbElement = document.getElementById("verb");
 const pastInput = document.getElementById("past");
 const participleInput = document.getElementById("participle");
 const feedbackElement = document.getElementById("feedback");
 const statsElement = document.getElementById("stats");
 const submitButton = document.getElementById("submit");
+const modeSelect = document.getElementById("mode");
+const pastInputContainer = document.getElementById("past-input");
+const participleInputContainer = document.getElementById("participle-input");
+const reviewList = document.getElementById("review-list");
 
+// Lade das aktuelle Verb
 function loadVerb() {
     const currentVerb = verbs[currentVerbIndex];
     verbElement.textContent = currentVerb.infinitive;
+
+    // Leere Eingabefelder
     pastInput.value = "";
     participleInput.value = "";
     feedbackElement.textContent = "";
+
+    // Zeige Eingabefelder basierend auf dem Modus
+    if (mode === "past") {
+        pastInputContainer.style.display = "block";
+        participleInputContainer.style.display = "none";
+    } else if (mode === "participle") {
+        pastInputContainer.style.display = "none";
+        participleInputContainer.style.display = "block";
+    } else {
+        pastInputContainer.style.display = "block";
+        participleInputContainer.style.display = "block";
+    }
 }
 
+// Überprüfe die Antwort
 submitButton.addEventListener("click", () => {
     const userPast = pastInput.value.trim().toLowerCase();
     const userParticiple = participleInput.value.trim().toLowerCase();
-    const correctPast = verbs[currentVerbIndex].simple_past.toLowerCase();
-    const correctParticiple = verbs[currentVerbIndex].past_participle.toLowerCase();
+    const currentVerb = verbs[currentVerbIndex];
+    const correctPast = currentVerb.simple_past.toLowerCase();
+    const correctParticiple = currentVerb.past_participle.toLowerCase();
 
+    let isCorrect = true;
     totalAttempts++;
 
-    if (userPast === correctPast && userParticiple === correctParticiple) {
+    // Überprüfung basierend auf dem Modus
+    if (mode === "past" || mode === "both") {
+        if (userPast !== correctPast) {
+            isCorrect = false;
+        }
+    }
+
+    if (mode === "participle" || mode === "both") {
+        if (userParticiple !== correctParticiple) {
+            isCorrect = false;
+        }
+    }
+
+    if (isCorrect) {
         correctAnswers++;
         feedbackElement.textContent = "Richtig!";
         feedbackElement.style.color = "green";
@@ -93,8 +129,9 @@ submitButton.addEventListener("click", () => {
         feedbackElement.textContent = `Falsch! Simple Past: "${correctPast}", Past Participle: "${correctParticiple}".`;
         feedbackElement.style.color = "red";
 
+        // Füge zur Liste der falsch beantworteten Wörter hinzu
         incorrectWords.push({
-            infinitive: verbs[currentVerbIndex].infinitive,
+            infinitive: currentVerb.infinitive,
             correctPast,
             correctParticiple,
             userPast,
@@ -107,11 +144,27 @@ submitButton.addEventListener("click", () => {
     setTimeout(loadVerb, 2000);
 });
 
+// Aktualisiere die Statistik
 function updateStats() {
     statsElement.textContent = `Statistik: ${correctAnswers} von ${totalAttempts} korrekt (${(
         (correctAnswers / totalAttempts) *
         100
     ).toFixed(2)}% richtig)`;
+
+    // Aktualisiere die Liste der falsch beantworteten Wörter
+    reviewList.innerHTML = "";
+    incorrectWords.forEach((word) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `Infinitiv: ${word.infinitive}, Simple Past: "${word.correctPast}", Past Participle: "${word.correctParticiple}"`;
+        reviewList.appendChild(listItem);
+    });
 }
 
+// Ändere den Modus
+modeSelect.addEventListener("change", (event) => {
+    mode = event.target.value;
+    loadVerb();
+});
+
+// Lade das erste Verb
 loadVerb();

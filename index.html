@@ -9,14 +9,19 @@
 <body>
     <div class="container">
         <h1>Übung: Unregelmäßige Verben</h1>
-        <p>Trage die korrekten Formen für das angegebene Verb ein.</p>
+        <p>Wähle, was du üben möchtest:</p>
+        <select id="mode">
+            <option value="both">Simple Past und Past Participle</option>
+            <option value="past">Nur Simple Past</option>
+            <option value="participle">Nur Past Participle</option>
+        </select>
         <div id="exercise">
             <p><strong>Infinitiv:</strong> <span id="verb">go</span></p>
-            <p>
+            <p id="past-input">
                 <label for="past">Simple Past:</label>
                 <input type="text" id="past" placeholder="Vergangenheitsform">
             </p>
-            <p>
+            <p id="participle-input">
                 <label for="participle">Past Participle:</label>
                 <input type="text" id="participle" placeholder="Partizip Perfekt">
             </p>
@@ -24,6 +29,8 @@
             <p id="feedback"></p>
         </div>
         <p id="stats">Statistik: 0 von 0 korrekt (0% richtig)</p>
+        <h2>Zu wiederholen:</h2>
+        <ul id="review-list"></ul>
     </div>
     <script src="script.js"></script>
 </body>
