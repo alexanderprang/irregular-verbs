@@ -55,7 +55,6 @@ const verbs = [
     { infinitive: "write", simple_past: "wrote", past_participle: "written" }
 ];
 
-// Hier bleibt der restliche Code aus der vorherigen Version unverändert
 let currentVerbIndex = 0;
 let correctAnswers = 0;
 let totalAttempts = 0;
