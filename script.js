@@ -58,8 +58,9 @@ const verbs = [
 let currentVerbIndex = 0;
 let correctAnswers = 0;
 let totalAttempts = 0;
-const incorrectWords = [];
-let mode = "both"; // Standardmodus: Beide Formen üben
+let incorrectWords = [];
+let isReviewing = false; // Flag: Sind wir im Wiederholungsmodus?
+let reviewVerbs = []; // Verben, die falsch beantwortet wurden
 
 // HTML-Elemente
 const verbElement = document.getElementById("verb");
@@ -75,7 +76,14 @@ const reviewList = document.getElementById("review-list");
 
 // Lade das aktuelle Verb
 function loadVerb() {
-    const currentVerb = verbs[currentVerbIndex];
+    const currentList = isReviewing ? reviewVerbs : verbs; // Verwende die richtige Liste
+    if (currentList.length === 0) {
+        feedbackElement.textContent = "Alle Verben wurden erfolgreich beantwortet!";
+        feedbackElement.style.color = "green";
+        return;
+    }
+
+    const currentVerb = currentList[currentVerbIndex];
     verbElement.textContent = currentVerb.infinitive;
 
     // Leere Eingabefelder
@@ -84,10 +92,10 @@ function loadVerb() {
     feedbackElement.textContent = "";
 
     // Zeige Eingabefelder basierend auf dem Modus
-    if (mode === "past") {
+    if (modeSelect.value === "past") {
         pastInputContainer.style.display = "block";
         participleInputContainer.style.display = "none";
-    } else if (mode === "participle") {
+    } else if (modeSelect.value === "participle") {
         pastInputContainer.style.display = "none";
         participleInputContainer.style.display = "block";
     } else {
@@ -97,10 +105,11 @@ function loadVerb() {
 }
 
 // Überprüfe die Antwort
-submitButton.addEventListener("click", () => {
+function checkAnswer() {
+    const currentList = isReviewing ? reviewVerbs : verbs; // Verwende die richtige Liste
+    const currentVerb = currentList[currentVerbIndex];
     const userPast = pastInput.value.trim().toLowerCase();
     const userParticiple = participleInput.value.trim().toLowerCase();
-    const currentVerb = verbs[currentVerbIndex];
     const correctPast = currentVerb.simple_past.toLowerCase();
     const correctParticiple = currentVerb.past_participle.toLowerCase();
 
@@ -108,13 +117,13 @@ submitButton.addEventListener("click", () => {
     totalAttempts++;
 
     // Überprüfung basierend auf dem Modus
-    if (mode === "past" || mode === "both") {
+    if (modeSelect.value === "past" || modeSelect.value === "both") {
         if (userPast !== correctPast) {
             isCorrect = false;
         }
     }
 
-    if (mode === "participle" || mode === "both") {
+    if (modeSelect.value === "participle" || modeSelect.value === "both") {
         if (userParticiple !== correctParticiple) {
             isCorrect = false;
         }
@@ -124,24 +133,34 @@ submitButton.addEventListener("click", () => {
         correctAnswers++;
         feedbackElement.textContent = "Richtig!";
         feedbackElement.style.color = "green";
+
+        // Entferne das aktuelle Verb aus der Wiederholungsliste, falls es dort ist
+        if (isReviewing) {
+            reviewVerbs.splice(currentVerbIndex, 1);
+        }
     } else {
         feedbackElement.textContent = `Falsch! Simple Past: "${correctPast}", Past Participle: "${correctParticiple}".`;
         feedbackElement.style.color = "red";
 
-        // Füge zur Liste der falsch beantworteten Wörter hinzu
-        incorrectWords.push({
-            infinitive: currentVerb.infinitive,
-            correctPast,
-            correctParticiple,
-            userPast,
-            userParticiple,
-        });
+        // Füge zur Wiederholungsliste hinzu, falls wir nicht bereits im Überprüfungsmodus sind
+        if (!isReviewing && !reviewVerbs.some(v => v.infinitive === currentVerb.infinitive)) {
+            reviewVerbs.push(currentVerb);
+        }
     }
 
     updateStats();
-    currentVerbIndex = (currentVerbIndex + 1) % verbs.length;
+
+    // Nächstes Verb laden
+    currentVerbIndex = (currentVerbIndex + 1) % currentList.length;
+
+    // Prüfe, ob der Wiederholungsmodus starten soll
+    if (!isReviewing && currentVerbIndex === 0) {
+        isReviewing = true;
+        currentVerbIndex = 0; // Zurücksetzen des Indexes für die Wiederholungsliste
+    }
+
     setTimeout(loadVerb, 2000);
-});
+}
 
 // Aktualisiere die Statistik
 function updateStats() {
@@ -152,18 +171,28 @@ function updateStats() {
 
     // Aktualisiere die Liste der falsch beantworteten Wörter
     reviewList.innerHTML = "";
-    incorrectWords.forEach((word) => {
+    reviewVerbs.forEach((word) => {
         const listItem = document.createElement("li");
-        listItem.textContent = `Infinitiv: ${word.infinitive}, Simple Past: "${word.correctPast}", Past Participle: "${word.correctParticiple}"`;
+        listItem.textContent = `Infinitiv: ${word.infinitive}, Simple Past: "${word.simple_past}", Past Participle: "${word.past_participle}"`;
         reviewList.appendChild(listItem);
     });
 }
 
-// Ändere den Modus
-modeSelect.addEventListener("change", (event) => {
-    mode = event.target.value;
-    loadVerb();
+// Event-Listener für den Submit-Button
+submitButton.addEventListener("click", checkAnswer);
+
+// Event-Listener für die Eingabetaste (Return)
+[pastInput, participleInput].forEach(input => {
+    input.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            checkAnswer();
+        }
+    });
 });
+
+// Ändere den Modus
+modeSelect.addEventListener("change", loadVerb);
 
 // Lade das erste Verb
 loadVerb();
